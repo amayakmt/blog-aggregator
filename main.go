@@ -2,36 +2,47 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/amayakmt/blog-aggregator/internal/config"
 )
 
+type state struct {
+	Config *config.Config
+}
+
 func main() {
 
-	// Before ----------------------------------------
+	mainState := state{}
 	cfg, err := config.Read()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("error: %v\n", err)
+		os.Exit(1)
 	}
-	fmt.Printf("--- Initial Config ---\n")
-	fmt.Printf("DB URL: %s\n", cfg.DBURL)
-	fmt.Printf("username: %s\n", cfg.CurrentUserName)
 
-	// Set User Name --------------------------------
-	userName := "amayakmt"
-	err = cfg.SetUser(userName)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println()
+	mainState.Config = &cfg
 
-	// After ----------------------------------------
-	cfg, err = config.Read()
-	if err != nil {
-		fmt.Println(err)
+	commandsInit := commands{
+		RegisteredCommands: map[string]func(*state, command) error{},
 	}
-	fmt.Printf("--- New Config ---\n")
-	fmt.Printf("DB URL: %s\n", cfg.DBURL)
-	fmt.Printf("username: %s\n", cfg.CurrentUserName)
+
+	commandsInit.register("login", handlerLogin)
+
+	args := os.Args
+	if len(os.Args) < 2 {
+		fmt.Println("no arguments provided")
+		os.Exit(1)
+	}
+
+	cmd := command{
+		Name:      args[1],
+		Arguments: args[2:],
+	}
+
+	err = commandsInit.run(&mainState, cmd)
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		os.Exit(1)
+	}
 
 }
