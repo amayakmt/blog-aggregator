@@ -46,6 +46,7 @@ func main() {
 	commandsInit.register("register", handlerRegister)
 	commandsInit.register("reset", handlerReset)
 	commandsInit.register("users", handlerGetUsers)
+	commandsInit.register("agg", handlerAgg)
 
 	// os.Args[0] is the binary name; the command name must be os.Args[1].
 	if len(os.Args) < 2 {
