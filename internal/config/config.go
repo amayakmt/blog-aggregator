@@ -16,14 +16,21 @@ type Config struct {
 	CurrentUserName string `json:"current_user_name"`
 }
 
+// configFilePath returns the absolute path to the config file.
+func configFilePath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ConfigFileName), nil
+}
+
 // Read loads the config file from the home directory and returns it.
 func Read() (Config, error) {
-	homedir, err := os.UserHomeDir()
+	configPath, err := configFilePath()
 	if err != nil {
 		return Config{}, err
 	}
-
-	configPath := filepath.Join(homedir, ConfigFileName)
 
 	file, err := os.Open(configPath)
 	if err != nil {
@@ -31,15 +38,12 @@ func Read() (Config, error) {
 	}
 	defer file.Close()
 
-	decoder := json.NewDecoder(file)
 	cfg := Config{}
-	err = decoder.Decode(&cfg)
-	if err != nil {
+	if err = json.NewDecoder(file).Decode(&cfg); err != nil {
 		return Config{}, err
 	}
 
 	return cfg, nil
-
 }
 
 // SetUser updates CurrentUserName in memory and rewrites the config file.
@@ -47,23 +51,16 @@ func Read() (Config, error) {
 func (cfg *Config) SetUser(userName string) error {
 	cfg.CurrentUserName = userName
 
-	homedir, err := os.UserHomeDir()
+	configPath, err := configFilePath()
 	if err != nil {
 		return err
 	}
-
-	configPath := filepath.Join(homedir, ConfigFileName)
 
 	file, err := os.Create(configPath)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
-	encoder := json.NewEncoder(file)
-	err = encoder.Encode(cfg)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return json.NewEncoder(file).Encode(cfg)
 }

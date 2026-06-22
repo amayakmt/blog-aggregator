@@ -27,13 +27,16 @@ func main() {
 	db, err := sql.Open("postgres", cfg.DBURL)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
+		os.Exit(1)
+	}
+	if err = db.Ping(); err != nil {
+		fmt.Printf("error: could not connect to database: %v\n", err)
+		os.Exit(1)
 	}
 
 	dbQueries := database.New(db)
 
-	mainState := state{}
-	mainState.DB = dbQueries
-	mainState.Config = &cfg
+	mainState := state{DB: dbQueries, Config: &cfg}
 
 	commandsInit := commands{
 		RegisteredCommands: map[string]func(*state, command) error{},
@@ -44,7 +47,6 @@ func main() {
 	commandsInit.register("reset", handlerReset)
 	commandsInit.register("users", handlerGetUsers)
 
-	args := os.Args
 	// os.Args[0] is the binary name; the command name must be os.Args[1].
 	if len(os.Args) < 2 {
 		fmt.Println("no arguments provided")
@@ -52,8 +54,8 @@ func main() {
 	}
 
 	cmd := command{
-		Name:      args[1],
-		Arguments: args[2:],
+		Name:      os.Args[1],
+		Arguments: os.Args[2:],
 	}
 
 	err = commandsInit.run(&mainState, cmd)
