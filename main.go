@@ -10,15 +10,21 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// state is threaded through every command handler so each handler has
+// access to both the database and the on-disk config without globals.
 type state struct {
 	DB     *database.Queries
 	Config *config.Config
 }
 
-// main ----------------------------------------------------------------
 func main() {
-	dbURL := "postgres://estyle-163:@localhost:5432/gator?sslmode=disable"
-	db, err := sql.Open("postgres", dbURL)
+	cfg, err := config.Read()
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		os.Exit(1)
+	}
+
+	db, err := sql.Open("postgres", cfg.DBURL)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
@@ -26,12 +32,6 @@ func main() {
 	dbQueries := database.New(db)
 
 	mainState := state{}
-	cfg, err := config.Read()
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-		os.Exit(1)
-	}
-
 	mainState.DB = dbQueries
 	mainState.Config = &cfg
 
@@ -41,8 +41,11 @@ func main() {
 
 	commandsInit.register("login", handlerLogin)
 	commandsInit.register("register", handlerRegister)
+	commandsInit.register("reset", handlerReset)
+	commandsInit.register("users", handlerGetUsers)
 
 	args := os.Args
+	// os.Args[0] is the binary name; the command name must be os.Args[1].
 	if len(os.Args) < 2 {
 		fmt.Println("no arguments provided")
 		os.Exit(1)
