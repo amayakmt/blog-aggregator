@@ -8,6 +8,7 @@ import (
 	"github.com/amayakmt/blog-aggregator/internal/config"
 	"github.com/amayakmt/blog-aggregator/internal/database"
 	_ "github.com/lib/pq"
+
 )
 
 // state is threaded through every command handler so each handler has
@@ -47,10 +48,12 @@ func main() {
 	commandsInit.register("reset", handlerReset)
 	commandsInit.register("users", handlerGetUsers)
 	commandsInit.register("agg", handlerAgg)
-	commandsInit.register("addfeed", handlerAddFeed)
+	commandsInit.register("addfeed", middlewareLoggedIn(handlerAddFeed))
 	commandsInit.register("feeds", handlerGetFeeds)
-	commandsInit.register("follow", handlerFollow)
-	commandsInit.register("following", handlerFollowing)
+	commandsInit.register("follow", middlewareLoggedIn(handlerFollow))
+	commandsInit.register("following", middlewareLoggedIn(handlerFollowing))
+	commandsInit.register("unfollow", middlewareLoggedIn(handlerUnfollow))
+	commandsInit.register("browse", middlewareLoggedIn(handlerBrowse))
 
 	// os.Args[0] is the binary name; the command name must be os.Args[1].
 	if len(os.Args) < 2 {
