@@ -47,6 +47,10 @@ func main() {
 	commandsInit.register("reset", handlerReset)
 	commandsInit.register("users", handlerGetUsers)
 	commandsInit.register("agg", handlerAgg)
+	commandsInit.register("addfeed", handlerAddFeed)
+	commandsInit.register("feeds", handlerGetFeeds)
+	commandsInit.register("follow", handlerFollow)
+	commandsInit.register("following", handlerFollowing)
 
 	// os.Args[0] is the binary name; the command name must be os.Args[1].
 	if len(os.Args) < 2 {
